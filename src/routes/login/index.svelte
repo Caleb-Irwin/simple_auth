@@ -114,7 +114,7 @@
 			class="rounded-full h-10 w-10 ml-0 text-center text-lg border-black hover:border-white hover:text-white hover:bg-black bg-white text-black disabled:bg-gray-300 disabled:border-gray-300 disabled:cursor-not-allowed"
 			on:click={() => (state === 'reauth' ? useReauth() : usePrev())}
 		>
-			>
+			→
 		</button>
 	</div>
 	<p class="text-center">Or</p>
