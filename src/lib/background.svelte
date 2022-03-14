@@ -26,8 +26,6 @@
 	}
 
 	.area {
-		background: rgb(94, 167, 245);
-		background: -webkit-linear-gradient(to left, #8f94fb, #1f2aff);
 		display: block;
 		position: absolute;
 		width: 100%;
