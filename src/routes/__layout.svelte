@@ -1,5 +1,5 @@
 <script>
-	import '../app.css';
+	import '../app.pcss';
 	import Background from '$lib/background.svelte';
 </script>
 
