@@ -3,7 +3,8 @@
 	import { Magic } from 'magic-sdk';
 	import { OAuthExtension } from '@magic-ext/oauth';
 	import MaskInput from 'svelte-input-mask/MaskInput.svelte';
-	import { verifyDIDT } from '$lib/verify';
+	import { verifyDIDT, verifyCallbackUrl } from '$lib/verify';
+	import { goto } from '$app/navigation';
 
 	const magic =
 		browser &&
@@ -19,10 +20,13 @@
 		lastSignIn: { method: 'phone' | 'email' | 'google'; value?: string; date: number } = null;
 
 	const init = async () => {
+		if (!verifyCallbackUrl(location.search)) {
+			goto('/login/invalid' + location.search, { replaceState: true });
+		}
 		const lastStr = localStorage.getItem('last');
 		if (lastStr !== null) {
 			lastSignIn = JSON.parse(lastStr);
-			if (lastSignIn.date /*+ 1000 * 60 * 60 * 24 * 7*/ < Date.now()) {
+			if (lastSignIn.date + 1000 * 60 * 60 * 24 * 7 < Date.now()) {
 				console.log('expired');
 
 				state = 'reauth';

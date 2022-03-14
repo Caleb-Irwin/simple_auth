@@ -1,3 +1,7 @@
+<script>
+	import { browser } from '$app/env';
+</script>
+
 <h1 class="text-3xl mb-2 text-center">Simple Auth</h1>
 <p>
 	A simple authenication service powered by <a
@@ -10,7 +14,7 @@
 <div class="grid grid-cols-2 mt-2">
 	<a
 		class="text-center text-lg m-1 bg-black p-1 text-white rounded-md border-solid border-2 hover:border-black"
-		href="/login?cb=/callback">Demo</a
+		href={'/login?cb=' + (browser && location.origin) + '/demo-callback'}>Demo</a
 	>
 	<a
 		class="text-center text-lg m-1 bg-black p-1 text-white rounded-md border-solid border-2 hover:border-black"
