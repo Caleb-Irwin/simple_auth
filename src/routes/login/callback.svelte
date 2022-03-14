@@ -2,7 +2,7 @@
 	import { Magic } from 'magic-sdk';
 	import { OAuthExtension } from '@magic-ext/oauth';
 	import { browser } from '$app/env';
-	import { verify } from '$lib/verify';
+	import { verifyDIDT } from '$lib/verify';
 
 	const init = async () => {
 		const magic = new Magic(import.meta.env['VITE_MAGIC_PUBLIC'] as string, {
@@ -12,9 +12,9 @@
 		const result = await magic.oauth.getRedirectResult();
 		localStorage.setItem(
 			'last',
-			JSON.stringify({ method: 'google', value: result.magic.userMetadata.email, data: Date.now() })
+			JSON.stringify({ method: 'google', value: result.magic.userMetadata.email, date: Date.now() })
 		);
-		verify(result.magic.idToken);
+		verifyDIDT(result.magic.idToken);
 	};
 	if (browser) init();
 </script>

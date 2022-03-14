@@ -1,4 +1,4 @@
-export const verify = async (didt: string) => {
+export const verifyDIDT = async (didt: string) => {
 	console.log(didt);
 	console.log('TO BE IMPLEMENTED');
 };

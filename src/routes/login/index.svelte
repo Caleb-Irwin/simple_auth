@@ -3,7 +3,7 @@
 	import { Magic } from 'magic-sdk';
 	import { OAuthExtension } from '@magic-ext/oauth';
 	import MaskInput from 'svelte-input-mask/MaskInput.svelte';
-	import { verify } from '$lib/verify';
+	import { verifyDIDT } from '$lib/verify';
 
 	const magic =
 		browser &&
@@ -16,12 +16,18 @@
 		areacode = '+1',
 		phone = '',
 		phoneMode = false,
-		lastSignIn: { method: 'phone' | 'email' | 'google'; value?: string; data: number } = null;
+		lastSignIn: { method: 'phone' | 'email' | 'google'; value?: string; date: number } = null;
 
 	const init = async () => {
 		const lastStr = localStorage.getItem('last');
 		if (lastStr !== null) {
 			lastSignIn = JSON.parse(lastStr);
+			if (lastSignIn.date /*+ 1000 * 60 * 60 * 24 * 7*/ < Date.now()) {
+				console.log('expired');
+
+				state = 'reauth';
+				return;
+			}
 			state = 'awaitingMagic';
 			try {
 				const loggedIn = await magic.user.isLoggedIn();
@@ -46,9 +52,9 @@
 		const didt = await magic.auth.loginWithMagicLink({ email });
 		localStorage.setItem(
 			'last',
-			JSON.stringify({ method: 'email', value: email, data: Date.now() })
+			JSON.stringify({ method: 'email', value: email, date: Date.now() })
 		);
-		verify(didt);
+		verifyDIDT(didt);
 	};
 	const loginWithPhone = async () => {
 		state = 'loading';
@@ -57,9 +63,13 @@
 		});
 		localStorage.setItem(
 			'last',
-			JSON.stringify({ method: 'phone', value: phone, data: Date.now() })
+			JSON.stringify({
+				method: 'phone',
+				value: '+' + areacode.replace(/\D/g, '') + phone.replace(/\D/g, ''),
+				date: Date.now()
+			})
 		);
-		verify(didt);
+		verifyDIDT(didt);
 	};
 	const loginWithGoogle = async () => {
 		state = 'loading';
@@ -72,13 +82,24 @@
 		state = 'loading';
 		try {
 			let didt = await magic.user.getIdToken();
-			verify(didt);
+			verifyDIDT(didt);
 		} catch (e) {
 			console.log(e);
 			useReauth();
 		}
 	};
-	const useReauth = async () => {};
+	const useReauth = async () => {
+		if (lastSignIn.method === 'phone') {
+			phone = lastSignIn.value.slice(lastSignIn.value.length - 10);
+			areacode = lastSignIn.value.slice(0, lastSignIn.value.length - 10);
+			loginWithPhone();
+		} else if (lastSignIn.method === 'email') {
+			email = lastSignIn.value;
+			loginWithEmail();
+		} else if (lastSignIn.method === 'google') {
+			loginWithGoogle();
+		}
+	};
 </script>
 
 <h1 class="text-center font-semibold text-2xl">Simple Authentication</h1>
