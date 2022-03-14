@@ -1,9 +1,15 @@
 <script lang="ts">
 	import { browser } from '$app/env';
-	import { Magic, type MagicUserMetadata } from 'magic-sdk';
+	import { Magic } from 'magic-sdk';
+	import { OAuthExtension } from '@magic-ext/oauth';
 	import MaskInput from 'svelte-input-mask/MaskInput.svelte';
+	import { verify } from '$lib/verify';
 
-	const magic = browser && new Magic(import.meta.env['VITE_MAGIC_PUBLIC'] as string);
+	const magic =
+		browser &&
+		new Magic(import.meta.env['VITE_MAGIC_PUBLIC'] as string, {
+			extensions: [new OAuthExtension()]
+		});
 
 	let state: 'loading' | 'awaitingMagic' | 'prev' | 'reauth' | 'login' = 'login',
 		email = '',
@@ -55,7 +61,13 @@
 		);
 		verify(didt);
 	};
-	const loginWithGoogle = async () => {};
+	const loginWithGoogle = async () => {
+		state = 'loading';
+		await magic.oauth.loginWithRedirect({
+			provider: 'google',
+			redirectURI: window.location.origin + '/login/callback'
+		});
+	};
 	const usePrev = async () => {
 		state = 'loading';
 		try {
@@ -67,13 +79,9 @@
 		}
 	};
 	const useReauth = async () => {};
-	const verify = async (didt: string) => {
-		console.log(didt);
-		console.log('TO BE IMPLEMENTED');
-	};
 </script>
 
-<h1 class="text-center font-semibold text-2xl">Simple Auth</h1>
+<h1 class="text-center font-semibold text-2xl">Simple Authentication</h1>
 
 {#if state === 'loading'}
 	<div class="m-4 flex justify-center">
@@ -83,7 +91,7 @@
 		/>
 	</div>
 {:else if state === 'reauth' || state === 'prev' || state === 'awaitingMagic'}
-	<h2 class="text-center text-lg">Previous</h2>
+	<h2 class="text-center text-lg">Continue with Previous</h2>
 	<div class="flex justify-center">
 		<button
 			class="rounded-full h-10 w-10 ml-0 text-center bg-white text-red-500 border-red-500 hover:bg-red-200 hover:border-white"
@@ -99,13 +107,15 @@
 		<span
 			class="text-center text-lg m-1 mr-1 border-solid border-2 p-1 px-4 rounded-full border-black"
 		>
-			{(lastSignIn.method === 'google' ? lastSignIn.method : '') + lastSignIn.value}
+			{(lastSignIn.method === 'google' ? 'Google: ' : '') + lastSignIn.value}
 		</span>
 		<button
 			disabled={state === 'awaitingMagic'}
-			class="rounded-full h-10 w-10 ml-0 text-center border-black hover:border-white disabled:bg-gray-800 disabled:border-gray-800 disabled:cursor-not-allowed"
-			on:click={() => (state === 'reauth' ? useReauth() : usePrev())}>→</button
+			class="rounded-full h-10 w-10 ml-0 text-center text-lg border-black hover:border-white hover:text-white hover:bg-black bg-white text-black disabled:bg-gray-300 disabled:border-gray-300 disabled:cursor-not-allowed"
+			on:click={() => (state === 'reauth' ? useReauth() : usePrev())}
 		>
+			>
+		</button>
 	</div>
 	<p class="text-center">Or</p>
 	<div class="grid grid-cols-1 m-0">
@@ -113,7 +123,7 @@
 			class="m-0.5"
 			on:click={async () => {
 				if (state === 'prev') {
-					await magic.user.logout();
+					magic.user.logout();
 					localStorage.removeItem('last');
 				}
 				state = 'login';
@@ -124,7 +134,7 @@
 			class="m-0.5"
 			on:click={async () => {
 				if (state === 'prev') {
-					await magic.user.logout();
+					magic.user.logout();
 					localStorage.removeItem('last');
 				}
 				state = 'login';
@@ -135,7 +145,7 @@
 			class="m-0.5"
 			on:click={async () => {
 				if (state === 'prev') {
-					await magic.user.logout();
+					magic.user.logout();
 					localStorage.removeItem('last');
 				}
 				loginWithGoogle();
@@ -159,17 +169,19 @@
 			<input type="email" name="email" placeholder="Email" bind:value={email} />
 		{/if}
 		<button
-			class="rounded-full h-10 w-10 ml-0 text-center"
-			on:click={() => (phoneMode ? loginWithPhone() : loginWithEmail())}>→</button
+			class="rounded-full h-10 w-10 ml-0 text-center text-lg  bg-white text-black border-black hover:border-white hover:text-white hover:bg-black"
+			on:click={() => (phoneMode ? loginWithPhone() : loginWithEmail())}
 		>
+			→
+		</button>
 	</form>
 	<div class="grid grid-cols-2">
 		{#if phoneMode}
-			<button on:click={() => (phoneMode = false)}>Email</button>
+			<button class="ml-0.5" on:click={() => (phoneMode = false)}>Email</button>
 		{:else}
-			<button on:click={() => (phoneMode = true)}>Phone</button>
+			<button class="ml-0.5" on:click={() => (phoneMode = true)}>Phone</button>
 		{/if}
-		<button on:click={loginWithGoogle}>Google</button>
+		<button class="mr-0.5" on:click={loginWithGoogle}>Google</button>
 	</div>
 {/if}
 
