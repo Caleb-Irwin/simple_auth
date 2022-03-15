@@ -76,6 +76,7 @@
 		verifyDIDT(didt);
 	};
 	const loginWithGoogle = async () => {
+		localStorage.setItem('callback', location.search);
 		state = 'loading';
 		await magic.oauth.loginWithRedirect({
 			provider: 'google',
