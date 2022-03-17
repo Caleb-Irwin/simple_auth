@@ -40,6 +40,7 @@
 		"jwk-to-pem": "^2.0.5",
 		"magic-sdk": "^8.1.0",
 		"njwt": "^1.2.0",
+		"svelte-icons": "^2.1.0",
 		"svelte-input-mask": "^1.1.0"
 	}
 }
