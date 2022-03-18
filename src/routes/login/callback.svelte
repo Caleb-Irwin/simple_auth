@@ -9,6 +9,8 @@
 			extensions: [new OAuthExtension()]
 		});
 
+		magic.preload();
+
 		const result = await magic.oauth.getRedirectResult();
 		localStorage.setItem(
 			'last',
