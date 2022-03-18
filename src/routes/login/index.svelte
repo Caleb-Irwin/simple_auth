@@ -48,6 +48,7 @@
 				state = 'login';
 			}
 		}
+		magic.preload();
 	};
 	if (browser) init();
 	const handleChange = ({ detail }) => {

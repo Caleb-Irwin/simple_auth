@@ -2,7 +2,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { verifyCB, verifyToken } from '$lib/verify';
 import { Magic } from '@magic-sdk/admin';
 import 'dotenv/config';
-import { Jwt } from 'njwt';
+import { Jwt, type JSONMap } from 'njwt';
 import jwkToPem from 'jwk-to-pem';
 
 const privateKey = jwkToPem(JSON.parse(process.env['PRIVATE_KEY']), { private: true });
@@ -41,7 +41,7 @@ export const post: RequestHandler<'', { message: string } | { redirect: string }
 	try {
 		const metadata = await m.users.getMetadataByToken(json.didt);
 
-		const token = new Jwt(metadata as any, true)
+		const token = new Jwt(metadata as unknown as JSONMap, true)
 			.setSigningAlgorithm('RS256')
 			.setSigningKey(privateKey)
 			.compact();
