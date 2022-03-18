@@ -2,7 +2,8 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { verifyCB, verifyToken } from '$lib/verify';
 import { Magic } from '@magic-sdk/admin';
 import 'dotenv/config';
-import { Jwt, type JSONMap } from 'njwt';
+import njwt, { type JSONMap } from 'njwt';
+const { Jwt } = njwt;
 import jwkToPem from 'jwk-to-pem';
 
 const privateKey = jwkToPem(JSON.parse(process.env['PRIVATE_KEY']), { private: true });

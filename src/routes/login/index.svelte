@@ -20,7 +20,8 @@
 		areacode = '+1',
 		phone = '',
 		phoneMode = false,
-		lastSignIn: { method: 'phone' | 'email' | 'google'; value?: string; date: number } = null;
+		lastSignIn: { method: 'phone' | 'email' | 'google'; value?: string; date: number } = null,
+		prefetchedDidt: { didt: string; expires: number } = null;
 
 	const init = async () => {
 		if (!verifyCallbackUrl(location.search)) {
@@ -31,7 +32,6 @@
 			lastSignIn = JSON.parse(lastStr);
 			if (lastSignIn.date + 1000 * 60 * 60 * 24 * 7 < Date.now()) {
 				console.log('expired');
-
 				state = 'reauth';
 				return;
 			}
@@ -42,6 +42,10 @@
 					state = 'reauth';
 					return;
 				}
+				prefetchedDidt = {
+					didt: await magic.user.getIdToken(),
+					expires: Date.now() + 1000 * 60 * 10
+				};
 				state = 'prev';
 			} catch (e) {
 				console.log(e);
@@ -90,7 +94,8 @@
 	const usePrev = async () => {
 		state = 'loading';
 		try {
-			let didt = await magic.user.getIdToken();
+			let didt =
+				prefetchedDidt.expires > Date.now() ? prefetchedDidt.didt : await magic.user.getIdToken();
 			verifyDIDT(didt);
 		} catch (e) {
 			console.log(e);
@@ -124,7 +129,7 @@
 	<h2 class="text-center text-lg">Continue with Previous</h2>
 	<div class="flex justify-center">
 		<button
-			class="grid place-items-center rounded-full h-10 w-10 ml-0 text-center bg-white text-red-500 border-red-500 hover:text-white hover:bg-red-500 hover:border-white"
+			class="grid place-items-center rounded-full h-10 w-10 mr-0  border-black hover:border-white hover:text-white hover:bg-black bg-white text-black"
 			on:click={async () => {
 				if (state === 'prev') {
 					state = 'loading';
@@ -148,7 +153,7 @@
 		</div>
 		<button
 			disabled={state === 'awaitingMagic'}
-			class="grid place-items-center rounded-full h-10 w-10 ml-0 text-center text-lg border-black hover:border-white hover:text-white hover:bg-black bg-white text-black disabled:bg-gray-300 disabled:border-gray-300 disabled:cursor-not-allowed"
+			class="grid place-items-center rounded-full h-10 w-10 ml-0 text-lg border-black hover:border-white hover:text-white hover:bg-black bg-white text-black disabled:bg-gray-300 disabled:border-gray-300 disabled:cursor-not-allowed"
 			on:click={() => (state === 'reauth' ? useReauth() : usePrev())}
 		>
 			<div style="width: 20px; height: 20px;">
