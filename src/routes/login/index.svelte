@@ -246,12 +246,3 @@
 		>
 	</div>
 {/if}
-
-<p class="text-center">
-	Powered by <a
-		class="underline"
-		href="https://magic.link"
-		target="_blank"
-		rel="noopener noreferrer">magic.link</a
-	>
-</p>
