@@ -1,32 +1,38 @@
 import { goto } from '$app/navigation';
 
 export const verifyDIDT = async (didt: string) => {
-	const search =
-		window.location.pathname === '/login/callback'
-			? localStorage.getItem('callback')
-			: window.location.search;
-	localStorage.removeItem('callback');
-	const rawRes = await fetch('/api/sign', {
-		body: JSON.stringify({
-			didt,
-			cb: getQueryVariable(search, 'cb'),
-			token: getQueryVariable(search, 'token')
-		}),
-		method: 'POST'
-	});
 	try {
-		const res = await rawRes.json();
-		if (rawRes.status === 200) {
-			goto(res.redirect);
-		} else {
-			alert(
-				`An error occurred! Please try again. Status Code: ${rawRes.status} Message: ${res.message}`
-			);
+		const search =
+			window.location.pathname === '/login/callback'
+				? localStorage.getItem('callback')
+				: window.location.search;
+		localStorage.removeItem('callback');
+		const rawRes = await fetch('/api/sign', {
+			body: JSON.stringify({
+				didt,
+				cb: getQueryVariable(search, 'cb'),
+				token: getQueryVariable(search, 'token')
+			}),
+			method: 'POST'
+		});
+		try {
+			const res = await rawRes.json();
+			if (rawRes.status === 200) {
+				goto(res.redirect);
+			} else {
+				alert(
+					`An error occurred! Please try again. Status Code: ${rawRes.status} Message: ${res.message}`
+				);
+				location.reload();
+			}
+		} catch (err) {
+			console.log(err);
+			alert(`An error occurred! Please try again. Status Code: ${rawRes.status}`);
 			location.reload();
 		}
-	} catch (err) {
-		console.log(err);
-		alert(`An error occurred! Please try again. Status Code: ${rawRes.status}`);
+	} catch (e) {
+		console.log(e);
+		alert(`An error occurred! Please try again. Error: ${e}`);
 		location.reload();
 	}
 };

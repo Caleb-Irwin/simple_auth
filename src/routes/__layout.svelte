@@ -29,6 +29,14 @@
 			>
 		</span>
 		<span class="mx-1.5">
+			<a
+				class="underline"
+				href="http://github.com/Caleb-Irwin/simple_auth/"
+				target="_blank"
+				rel="noopener noreferrer">Github</a
+			>
+		</span>
+		<span class="mx-1.5">
 			<a class="underline" href="/">About</a>
 		</span>
 		<span class="mx-1.5">

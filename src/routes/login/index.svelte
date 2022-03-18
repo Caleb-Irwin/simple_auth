@@ -8,6 +8,7 @@
 	import MethodIcons from '$lib/methodIcons.svelte';
 	import MdArrowForward from 'svelte-icons/md/MdArrowForward.svelte';
 	import MdClose from 'svelte-icons/md/MdClose.svelte';
+	import IoMdLock from 'svelte-icons/io/IoMdLock.svelte';
 
 	const magic =
 		browser &&
@@ -15,11 +16,13 @@
 			extensions: [new OAuthExtension()]
 		});
 
-	let state: 'loading' | 'awaitingMagic' | 'prev' | 'reauth' | 'login' = 'login',
+	let state: 'prev' | 'reauth' | 'login' = 'login',
 		email = '',
 		areacode = '+1',
 		phone = '',
 		phoneMode = false,
+		loading = false,
+		loadingGoogle = false,
 		lastSignIn: { method: 'phone' | 'email' | 'google'; value?: string; date: number } = null,
 		prefetchedDidt: { didt: string; expires: number } = null;
 
@@ -35,32 +38,40 @@
 				state = 'reauth';
 				return;
 			}
-			state = 'awaitingMagic';
+			loading = true;
+			state = 'prev';
 			try {
 				const loggedIn = await magic.user.isLoggedIn();
 				if (!loggedIn) {
 					state = 'reauth';
+					loading = false;
 					return;
 				}
 				prefetchedDidt = {
 					didt: await magic.user.getIdToken(),
 					expires: Date.now() + 1000 * 60 * 10
 				};
-				state = 'prev';
+				loading = false;
 			} catch (e) {
 				console.log(e);
 				state = 'login';
+				loading = false;
 			}
 		}
 		magic.preload();
 	};
 	if (browser) init();
+	const submit = () => {
+		if (state === 'login') phoneMode ? loginWithPhone() : loginWithEmail();
+		else state === 'reauth' ? useReauth() : usePrev();
+		return false;
+	};
 	const handleChange = ({ detail }) => {
 		phone = detail.inputState.maskedValue;
 		console.log('+' + areacode.replace(/\D/g, '') + phone.replace(/\D/g, ''));
 	};
 	const loginWithEmail = async () => {
-		state = 'loading';
+		loading = true;
 		const didt = await magic.auth.loginWithMagicLink({ email });
 		localStorage.setItem(
 			'last',
@@ -69,7 +80,7 @@
 		verifyDIDT(didt);
 	};
 	const loginWithPhone = async () => {
-		state = 'loading';
+		loading = true;
 		const didt = await magic.auth.loginWithSMS({
 			phoneNumber: '+' + areacode.replace(/\D/g, '') + phone.replace(/\D/g, '')
 		});
@@ -85,14 +96,15 @@
 	};
 	const loginWithGoogle = async () => {
 		localStorage.setItem('callback', location.search);
-		state = 'loading';
+		loading = true;
+		loadingGoogle = true;
 		await magic.oauth.loginWithRedirect({
 			provider: 'google',
 			redirectURI: window.location.origin + '/login/callback'
 		});
 	};
 	const usePrev = async () => {
-		state = 'loading';
+		loading = true;
 		try {
 			let didt =
 				prefetchedDidt.expires > Date.now() ? prefetchedDidt.didt : await magic.user.getIdToken();
@@ -116,23 +128,21 @@
 	};
 </script>
 
-<h1 class="text-center font-semibold text-2xl">Simple Authentication</h1>
+<div class="flex w-full justify-center items-center">
+	<div class="w-8 h-8 inline-block mr-1"><IoMdLock /></div>
+	<h1 class="text-center font-semibold text-2xl inline-block">Simple Authentication</h1>
+</div>
 
-{#if state === 'loading'}
-	<div class="m-4 flex justify-center">
-		<div
-			style="border-top-color:transparent"
-			class="w-16 h-16 border-4 border-black border-solid rounded-full animate-spin"
-		/>
-	</div>
-{:else if state === 'reauth' || state === 'prev' || state === 'awaitingMagic'}
-	<h2 class="text-center text-lg">Continue with Previous</h2>
-	<div class="flex justify-center">
+<h2 class="text-center text-lg">
+	{state === 'login' ? 'Login or Sign Up' : 'Continue With Previous'}
+</h2>
+
+<form class="flex justify-center flex-row" on:submit|preventDefault={submit}>
+	{#if state !== 'login'}
 		<button
 			class="grid place-items-center rounded-full h-10 w-10 mr-0  border-black hover:border-white hover:text-white hover:bg-black bg-white text-black"
 			on:click={async () => {
 				if (state === 'prev') {
-					state = 'loading';
 					magic.user.logout();
 					localStorage.removeItem('last');
 				}
@@ -151,86 +161,37 @@
 			</div>
 			<span>{lastSignIn.value}</span>
 		</div>
-		<button
-			disabled={state === 'awaitingMagic'}
-			class="grid place-items-center rounded-full h-10 w-10 ml-0 text-lg border-black hover:border-white hover:text-white hover:bg-black bg-white text-black disabled:bg-gray-300 disabled:border-gray-300 disabled:cursor-not-allowed"
-			on:click={() => (state === 'reauth' ? useReauth() : usePrev())}
-		>
-			<div style="width: 20px; height: 20px;">
-				<MdArrowForward />
-			</div>
-		</button>
-	</div>
-{:else if state === 'login'}
-	<h2 class="text-center text-lg">Login or Sign Up</h2>
-	<form
-		class="flex justify-center flex-row"
-		on:submit={() => (phoneMode ? loginWithPhone() : loginWithEmail())}
+	{:else if phoneMode}
+		<input type="text" size="2" class="px-0.5 mx-0" bind:value={areacode} />
+		<MaskInput
+			alwaysShowMask
+			mask="(000) 000 - 0000"
+			size={12}
+			showMask
+			maskChar="_"
+			on:change={handleChange}
+		/>
+	{:else}
+		<input class="inline-block" type="email" name="email" placeholder="Email" bind:value={email} />
+	{/if}
+	<button
+		disabled={loading}
+		class="grid place-items-center rounded-full h-10 w-10 ml-0 text-lg border-black hover:border-white hover:text-white hover:bg-black bg-white text-black disabled:bg-gray-300 disabled:border-gray-300 disabled:cursor-not-allowed"
 	>
-		{#if phoneMode}
-			<input type="text" size="2" class="px-0.5 mx-0" bind:value={areacode} />
-			<MaskInput
-				alwaysShowMask
-				mask="(000) 000 - 0000"
-				size={12}
-				showMask
-				maskChar="_"
-				on:change={handleChange}
-			/>
-		{:else}
-			<input
-				class="inline-block"
-				type="email"
-				name="email"
-				placeholder="Email"
-				bind:value={email}
-			/>
-		{/if}
-		<button
-			class="grid place-items-center rounded-full h-10 w-10 m-1 ml-0 text-center text-lg  bg-white text-black border-black hover:border-white hover:text-white hover:bg-black"
-			on:click={() => (phoneMode ? loginWithPhone() : loginWithEmail())}
-		>
-			<div style="width: 20px; height: 20px;">
+		<div style="width: 20px; height: 20px;">
+			{#if !loading || loadingGoogle}
 				<MdArrowForward />
-			</div>
-		</button>
-	</form>
-{/if}
-{#if state !== 'loading'}
-	<div class={`grid ${state === 'login' ? 'grid-cols-2' : 'grid-cols-3'} m-0`}>
-		{#if phoneMode || state !== 'login'}
-			<button
-				class="h-10 m-0.5"
-				on:click={async () => {
-					if (state === 'prev') {
-						magic.user.logout();
-						localStorage.removeItem('last');
-					}
-					state = 'login';
-					phoneMode = false;
-				}}
-			>
-				<div class="h-full grid place-items-center">
-					<MethodIcons method="email" noStyle={true} addClass="w-5 hover:text-white" />
-				</div>
-			</button>
-		{/if}
-		{#if !phoneMode || state !== 'login'}
-			<button
-				class="h-10 m-0.5"
-				on:click={async () => {
-					if (state === 'prev') {
-						magic.user.logout();
-						localStorage.removeItem('last');
-					}
-					state = 'login';
-					phoneMode = true;
-				}}
-				><div class="h-full grid place-items-center">
-					<MethodIcons method="phone" noStyle={true} addClass="w-5 hover:text-white" />
-				</div></button
-			>
-		{/if}
+			{:else}
+				<div
+					style="border-top-color:transparent"
+					class="w-5 h-5 border-2 border-black border-solid rounded-full animate-spin"
+				/>
+			{/if}
+		</div>
+	</button>
+</form>
+<div class={`grid ${state === 'login' ? 'grid-cols-2' : 'grid-cols-3'} m-0`}>
+	{#if phoneMode || state !== 'login'}
 		<button
 			class="h-10 m-0.5"
 			on:click={async () => {
@@ -238,11 +199,50 @@
 					magic.user.logout();
 					localStorage.removeItem('last');
 				}
-				loginWithGoogle();
+				state = 'login';
+				phoneMode = false;
+			}}
+		>
+			<div class="h-full grid place-items-center">
+				<MethodIcons method="email" noStyle={true} addClass="w-5 hover:text-white" />
+			</div>
+		</button>
+	{/if}
+	{#if !phoneMode || state !== 'login'}
+		<button
+			class="h-10 m-0.5"
+			on:click={async () => {
+				if (state === 'prev') {
+					magic.user.logout();
+					localStorage.removeItem('last');
+				}
+				state = 'login';
+				phoneMode = true;
 			}}
 			><div class="h-full grid place-items-center">
-				<MethodIcons method="google" noStyle={true} addClass="w-5 hover:text-white" />
+				<MethodIcons method="phone" noStyle={true} addClass="w-5 hover:text-white" />
 			</div></button
 		>
-	</div>
-{/if}
+	{/if}
+	<button
+		class={`h-10 m-0.5 ${loadingGoogle ? 'hover:bg-white hover:border-gray-500' : ''}`}
+		on:click={async () => {
+			if (state === 'prev') {
+				magic.user.logout();
+				localStorage.removeItem('last');
+			}
+			loginWithGoogle();
+		}}
+	>
+		<div class="h-full grid place-items-center">
+			{#if loadingGoogle}
+				<div
+					style="border-top-color:transparent"
+					class="w-5 h-5 border-2 border-black border-solid rounded-full animate-spin"
+				/>
+			{:else}
+				<MethodIcons method="google" noStyle={true} addClass="w-5 hover:text-white" />
+			{/if}
+		</div></button
+	>
+</div>
