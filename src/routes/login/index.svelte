@@ -192,6 +192,7 @@
 			class="inline-block flex-grow ml-0.5"
 			type="email"
 			name="email"
+			size={12}
 			placeholder="Email"
 			bind:value={email}
 		/>
