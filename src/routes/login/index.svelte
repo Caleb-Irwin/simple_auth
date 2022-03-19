@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/env';
-	import { Magic } from 'magic-sdk';
+	import { Magic, RPCErrorCode } from 'magic-sdk';
 	import { OAuthExtension } from '@magic-ext/oauth';
 	import MaskInput from 'svelte-input-mask/MaskInput.svelte';
 	import { verifyDIDT, verifyCallbackUrl } from '$lib/verify';
@@ -9,7 +9,9 @@
 	import MdArrowForward from 'svelte-icons/md/MdArrowForward.svelte';
 	import MdClose from 'svelte-icons/md/MdClose.svelte';
 	import IoMdLock from 'svelte-icons/io/IoMdLock.svelte';
+	import { onMount } from 'svelte';
 
+	type Method = 'phone' | 'email' | 'google';
 	const magic =
 		browser &&
 		new Magic(import.meta.env['VITE_MAGIC_PUBLIC'] as string, {
@@ -23,10 +25,12 @@
 		phoneMode = false,
 		loading = false,
 		loadingGoogle = false,
-		lastSignIn: { method: 'phone' | 'email' | 'google'; value?: string; date: number } = null,
-		prefetchedDidt: { didt: string; expires: number } = null;
+		lastSignIn: { method: Method; value?: string; date: number } = null,
+		prefetchedDidt: { didt: string; expires: number } = null,
+		awaitingInitailization = false,
+		loginOnInit = false;
 
-	const init = async () => {
+	onMount(async () => {
 		if (!verifyCallbackUrl(location.search)) {
 			goto('/login/invalid' + location.search, { replaceState: true });
 		}
@@ -38,29 +42,33 @@
 				state = 'reauth';
 				return;
 			}
-			loading = true;
+			awaitingInitailization = true;
 			state = 'prev';
 			try {
 				const loggedIn = await magic.user.isLoggedIn();
+				if (!awaitingInitailization) return;
 				if (!loggedIn) {
 					state = 'reauth';
-					loading = false;
+					awaitingInitailization = false;
+					if (loginOnInit) useReauth();
 					return;
 				}
+				if (!awaitingInitailization) return;
 				prefetchedDidt = {
 					didt: await magic.user.getIdToken(),
 					expires: Date.now() + 1000 * 60 * 10
 				};
-				loading = false;
+				if (!awaitingInitailization) return;
+				awaitingInitailization = false;
+				if (loginOnInit) usePrev();
 			} catch (e) {
 				console.log(e);
+				awaitingInitailization = false;
 				state = 'login';
-				loading = false;
 			}
 		}
 		magic.preload();
-	};
-	if (browser) init();
+	});
 	const submit = () => {
 		if (state === 'login') phoneMode ? loginWithPhone() : loginWithEmail();
 		else state === 'reauth' ? useReauth() : usePrev();
@@ -70,30 +78,8 @@
 		phone = detail.inputState.maskedValue;
 		console.log('+' + areacode.replace(/\D/g, '') + phone.replace(/\D/g, ''));
 	};
-	const loginWithEmail = async () => {
-		loading = true;
-		const didt = await magic.auth.loginWithMagicLink({ email });
-		localStorage.setItem(
-			'last',
-			JSON.stringify({ method: 'email', value: email, date: Date.now() })
-		);
-		verifyDIDT(didt);
-	};
-	const loginWithPhone = async () => {
-		loading = true;
-		const didt = await magic.auth.loginWithSMS({
-			phoneNumber: '+' + areacode.replace(/\D/g, '') + phone.replace(/\D/g, '')
-		});
-		localStorage.setItem(
-			'last',
-			JSON.stringify({
-				method: 'phone',
-				value: '+' + areacode.replace(/\D/g, '') + phone.replace(/\D/g, ''),
-				date: Date.now()
-			})
-		);
-		verifyDIDT(didt);
-	};
+	const loginWithEmail = async () => login('email');
+	const loginWithPhone = async () => login('phone');
 	const loginWithGoogle = async () => {
 		localStorage.setItem('callback', location.search);
 		loading = true;
@@ -103,8 +89,37 @@
 			redirectURI: window.location.origin + '/login/callback'
 		});
 	};
+	const login = async (method: Method) => {
+		try {
+			if (method === 'google') {
+				return loginWithGoogle();
+			}
+			loading = true;
+			const value =
+				method === 'email' ? email : '+' + areacode.replace(/\D/g, '') + phone.replace(/\D/g, '');
+			const didt =
+				method === 'email'
+					? await magic.auth.loginWithMagicLink({ email: value })
+					: await magic.auth.loginWithSMS({
+							phoneNumber: value
+					  });
+			localStorage.setItem('last', JSON.stringify({ method, value, date: Date.now() }));
+			verifyDIDT(didt);
+		} catch (e) {
+			if (method === 'email' && e.code === RPCErrorCode.UserRequestEditEmail) {
+				loading = false;
+			} else {
+				alert(`We couldn't log you in. Please try again. (Error message: ${e.message})`);
+				location.reload();
+			}
+		}
+	};
 	const usePrev = async () => {
 		loading = true;
+		if (awaitingInitailization) {
+			loginOnInit = true;
+			return;
+		}
 		try {
 			let didt =
 				prefetchedDidt.expires > Date.now() ? prefetchedDidt.didt : await magic.user.getIdToken();
@@ -176,7 +191,7 @@
 	{/if}
 	<button
 		disabled={loading}
-		class="grid place-items-center rounded-full h-10 w-10 ml-0 text-lg border-black hover:border-white hover:text-white hover:bg-black bg-white text-black disabled:bg-gray-300 disabled:border-gray-300 disabled:cursor-not-allowed"
+		class="grid place-items-center rounded-full h-10 w-10 ml-0 text-lg border-black hover:border-white hover:text-white hover:bg-black bg-white text-black disabled:bg-white disabled:cursor-not-allowed"
 	>
 		<div style="width: 20px; height: 20px;">
 			{#if !loading || loadingGoogle}
@@ -199,6 +214,7 @@
 					magic.user.logout();
 					localStorage.removeItem('last');
 				}
+				awaitingInitailization = false;
 				state = 'login';
 				phoneMode = false;
 			}}
@@ -216,6 +232,7 @@
 					magic.user.logout();
 					localStorage.removeItem('last');
 				}
+				awaitingInitailization = false;
 				state = 'login';
 				phoneMode = true;
 			}}
@@ -231,6 +248,7 @@
 				magic.user.logout();
 				localStorage.removeItem('last');
 			}
+			awaitingInitailization = false;
 			loginWithGoogle();
 		}}
 	>
