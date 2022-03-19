@@ -169,7 +169,7 @@
 			</div>
 		</button>
 		<div
-			class="text-center text-lg m-1 mr-1 border-solid border-2 p-1 px-4 rounded-full border-black h-full inline-flex justify-center"
+			class="flex-grow text-center text-lg m-1 mr-1 border-solid border-2 p-1 px-4 rounded-full border-black h-full inline-flex justify-center"
 		>
 			<div class="flex-grow inline-grid place-items-center mr-2">
 				<MethodIcons method={lastSignIn.method} size={20} />
@@ -177,23 +177,30 @@
 			<span>{lastSignIn.value}</span>
 		</div>
 	{:else if phoneMode}
-		<input type="text" size="2" class="px-0.5 mx-0" bind:value={areacode} />
+		<input type="text" size="1" class="px-0.5 w-10 mx-0.5" bind:value={areacode} />
 		<MaskInput
 			alwaysShowMask
 			mask="(000) 000 - 0000"
 			size={12}
 			showMask
 			maskChar="_"
+			class="flex-grow"
 			on:change={handleChange}
 		/>
 	{:else}
-		<input class="inline-block" type="email" name="email" placeholder="Email" bind:value={email} />
+		<input
+			class="inline-block flex-grow ml-0.5"
+			type="email"
+			name="email"
+			placeholder="Email"
+			bind:value={email}
+		/>
 	{/if}
 	<button
 		disabled={loading}
-		class="grid place-items-center rounded-full h-10 w-10 ml-0 text-lg border-black hover:border-white hover:text-white hover:bg-black bg-white text-black disabled:bg-white disabled:cursor-not-allowed"
+		class="flex items-center justify-center rounded-full h-10 w-10 ml-0 text-lg border-black hover:border-white hover:text-white hover:bg-black bg-white text-black disabled:bg-white disabled:cursor-not-allowed"
 	>
-		<div style="width: 20px; height: 20px;">
+		<div class="w-5 h-5">
 			{#if !loading || loadingGoogle}
 				<MdArrowForward />
 			{:else}
