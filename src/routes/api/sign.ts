@@ -2,13 +2,15 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { verifyCB, verifyToken } from '$lib/verify';
 import { Magic } from '@magic-sdk/admin';
 import 'dotenv/config';
-import njwt, { type JSONMap } from 'njwt';
+import njwt from 'njwt';
 const { Jwt, verify } = njwt;
 import jwkToPem from 'jwk-to-pem';
 import cookie from 'cookie';
+import getUuidByString from 'uuid-by-string';
 
 const privateKey = jwkToPem(JSON.parse(process.env['PRIVATE_KEY']), { private: true });
 const publicKey = jwkToPem(JSON.parse(process.env['PRIVATE_KEY']), { private: false });
+const namespace = process.env['NAMESPACE'] ?? publicKey;
 
 const m = new Magic(process.env['MAGIC_PRIVATE']);
 
@@ -80,7 +82,39 @@ export const post: RequestHandler<'', { message: string } | { redirect: string }
 				}
 			}
 		}
-		const token = new Jwt(metadata as unknown as JSONMap, true)
+
+		const claims: {
+			sub: string;
+			exp: number;
+			email?: string;
+			phone_number?: string;
+			ggl?: boolean;
+			jti?: string;
+			iat?: number;
+		} = {
+			sub: undefined,
+			exp: Math.ceil((Date.now() + 300000) /* 5 Minutes*/ / 1000 /* To seconds*/)
+		};
+
+		// Add sub to claims
+		if (metadata.oauthProvider === 'google') {
+			claims.ggl = true;
+			claims.sub = getUuidByString(`g-${gID}`, namespace);
+		} else if (metadata.email) {
+			claims.sub = getUuidByString(`e-${metadata.email}`, namespace);
+		} else {
+			claims.sub = getUuidByString(`$p-${metadata.phoneNumber}`, namespace);
+		}
+
+		// Add email and phone
+		if (metadata.email) {
+			claims.email = metadata.email;
+		}
+		if (metadata.phoneNumber) {
+			claims.phone_number = metadata.phoneNumber;
+		}
+
+		const token = new Jwt(claims, true)
 			.setSigningAlgorithm('RS256')
 			.setSigningKey(privateKey)
 			.compact();
