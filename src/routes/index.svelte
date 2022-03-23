@@ -2,8 +2,8 @@
 	import { browser } from '$app/env';
 </script>
 
-<h1 class="text-3xl mb-2 text-center">Simple Auth</h1>
-<p>
+<h1 class="text-3xl mb-2 text-center">Simple Authentication</h1>
+<p class="text-center">
 	A simple authenication service powered by <a
 		class="underline"
 		href="https://magic.link"

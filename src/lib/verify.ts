@@ -1,6 +1,6 @@
 import { goto } from '$app/navigation';
 
-export const verifyDIDT = async (didt: string) => {
+export const verifyDIDT = async (didt: string, accessToken?: string) => {
 	try {
 		const search =
 			window.location.pathname === '/login/callback'
@@ -11,7 +11,8 @@ export const verifyDIDT = async (didt: string) => {
 			body: JSON.stringify({
 				didt,
 				cb: getQueryVariable(search, 'cb'),
-				token: getQueryVariable(search, 'token')
+				token: getQueryVariable(search, 'token'),
+				accessToken: accessToken ?? undefined
 			}),
 			method: 'POST'
 		});

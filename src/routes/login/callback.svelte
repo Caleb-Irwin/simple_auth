@@ -16,7 +16,7 @@
 			'last',
 			JSON.stringify({ method: 'google', value: result.magic.userMetadata.email, date: Date.now() })
 		);
-		verifyDIDT(result.magic.idToken);
+		verifyDIDT(result.magic.idToken, result.oauth.accessToken);
 	};
 	if (browser) init();
 </script>
