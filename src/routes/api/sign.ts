@@ -81,7 +81,7 @@ export const post: RequestHandler<'', { message: string } | { redirect: string }
 			exp: number;
 			email?: string;
 			phone_number?: string;
-			ggl?: boolean;
+			gid?: string;
 			jti?: string;
 			iat?: number;
 		} = {
@@ -91,7 +91,7 @@ export const post: RequestHandler<'', { message: string } | { redirect: string }
 
 		// Add sub to claims
 		if (metadata.oauthProvider === 'google') {
-			claims.ggl = true;
+			claims.gid = gID;
 			claims.sub = getUuidByString(`g-${gID}`, namespace);
 		} else if (metadata.email) {
 			claims.sub = getUuidByString(`e-${metadata.email}`, namespace);
