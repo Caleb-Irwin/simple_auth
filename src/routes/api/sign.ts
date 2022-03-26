@@ -4,14 +4,11 @@ import { Magic } from '@magic-sdk/admin';
 import 'dotenv/config';
 import njwt from 'njwt';
 const { Jwt, verify } = njwt;
-import jwkToPem from 'jwk-to-pem';
 import cookie from 'cookie';
 import getUuidByString from 'uuid-by-string';
 
-const privateKey = jwkToPem(JSON.parse(process.env['PRIVATE_KEY']), { private: true });
-const publicKey = jwkToPem(JSON.parse(process.env['PRIVATE_KEY']), { private: false });
-const namespace = process.env['NAMESPACE'] ?? publicKey;
-const m = new Magic(process.env['MAGIC_PRIVATE']);
+const namespace = (import.meta.env['VITE_NAMESPACE'] as string) ?? __PUBLIC_KEY_PEM__;
+const m = new Magic(__MAGIC_PRIVATE__);
 
 export const post: RequestHandler<'', { message: string } | { redirect: string }> = async ({
 	request
@@ -109,7 +106,7 @@ export const post: RequestHandler<'', { message: string } | { redirect: string }
 
 		const token = new Jwt(claims, true)
 			.setSigningAlgorithm('RS256')
-			.setSigningKey(privateKey)
+			.setSigningKey(__PRIVATE_KEY_PEM__)
 			.compact();
 
 		const res = {
@@ -158,12 +155,12 @@ const verifyGoogleToken = async (accessToken: string): Promise<string | null> =>
 const signGId = (gid: string, iss: string): string => {
 	return new Jwt({ gid, iss }, false)
 		.setSigningAlgorithm('RS256')
-		.setSigningKey(privateKey)
+		.setSigningKey(__PRIVATE_KEY_PEM__)
 		.compact();
 };
 const verifyGId = (gid: string, iss: string): string => {
 	try {
-		const jwt = verify(gid, publicKey, 'RS256');
+		const jwt = verify(gid, __PUBLIC_KEY_PEM__, 'RS256');
 		if (jwt.body['iss'] === iss) {
 			return jwt.body['gid'];
 		} else {
