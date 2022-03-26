@@ -1,5 +1,5 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { verifyCB, verifyToken } from '$lib/verify';
+import { verifyCB } from '$lib/verify';
 import { Magic } from '@magic-sdk/admin';
 import 'dotenv/config';
 import njwt from 'njwt';
@@ -11,14 +11,12 @@ import getUuidByString from 'uuid-by-string';
 const privateKey = jwkToPem(JSON.parse(process.env['PRIVATE_KEY']), { private: true });
 const publicKey = jwkToPem(JSON.parse(process.env['PRIVATE_KEY']), { private: false });
 const namespace = process.env['NAMESPACE'] ?? publicKey;
-
 const m = new Magic(process.env['MAGIC_PRIVATE']);
 
 export const post: RequestHandler<'', { message: string } | { redirect: string }> = async ({
 	request
 }) => {
-	const json: { didt: string; cb?: string; token?: string; accessToken?: string } =
-		await request.json();
+	const json: { didt: string; cb?: string; accessToken?: string } = await request.json();
 	const googleId = cookie.parse(request.headers.get('cookie') || '').googleId;
 
 	if (typeof json.didt !== 'string') {
@@ -29,18 +27,13 @@ export const post: RequestHandler<'', { message: string } | { redirect: string }
 			}
 		};
 	}
-	if (typeof json.cb !== 'string' && typeof json.token !== 'string') {
+	if (typeof json.cb !== 'string') {
 		return {
 			status: 400,
 			body: { message: 'No callback or token provided!' }
 		};
 	}
-	if (json.token && !verifyToken(json.token)) {
-		return {
-			status: 400,
-			body: { message: 'Invalid Token provided.' }
-		};
-	} else if (!verifyCB(json.cb)) {
+	if (!verifyCB(json.cb)) {
 		return {
 			status: 400,
 			body: { message: 'Invalid Callback provided.' }

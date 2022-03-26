@@ -11,7 +11,6 @@ export const verifyDIDT = async (didt: string, accessToken?: string) => {
 			body: JSON.stringify({
 				didt,
 				cb: getQueryVariable(search, 'cb'),
-				token: getQueryVariable(search, 'token'),
 				accessToken: accessToken ?? undefined
 			}),
 			method: 'POST'
@@ -42,10 +41,6 @@ export const verifyCallbackUrl = (query: string): boolean => {
 	if (cb) {
 		return verifyCB(cb);
 	}
-	const token = getQueryVariable(query, 'token');
-	if (token) {
-		return verifyToken(token);
-	}
 	return false;
 };
 
@@ -53,11 +48,6 @@ export const verifyCB = (cb: string): boolean => {
 	return /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=+$,\w]+@)?[A-Za-z0-9.-]+|(?:www\.|[-;:&=+$,\w]+@)[A-Za-z0-9.-]+)((?:\/[+~%/.\w\-_]*)?\??(?:[-+=&;%@.\w_]*)#?(?:[.!/\\\w]*))?)/.test(
 		cb
 	);
-};
-
-export const verifyToken = (token: string): boolean => {
-	console.log('TODO');
-	return true;
 };
 
 function getQueryVariable(query: string, variable: string): string {

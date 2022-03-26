@@ -47,11 +47,6 @@
 				<a class="underline" href="/">About</a>
 			</span>
 		</div>
-		<div class="inline-flex items-center">
-			<span class="mx-1.5">
-				<a class="underline" href="/admin/">Admin</a>
-			</span>
-		</div>
 	</div>
 </div>
 <Background />
