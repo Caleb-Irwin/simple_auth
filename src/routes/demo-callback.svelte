@@ -3,6 +3,7 @@
 	export const load: Load = function ({ url }) {
 		return { props: { jwt: url.searchParams.get('jwt') } };
 	};
+	const publicKey = __PUBLIC_KEY_JWK__
 </script>
 
 <script lang="ts">
@@ -16,7 +17,7 @@
 		<iframe
 			class="w-full h-full"
 			title="jwt viewer"
-			src={`https://jwt.io/#debugger-io?token=${jwt}&publicKey=${__PUBLIC_KEY_JWK__}`}
+			src={`https://jwt.io/#debugger-io?token=${jwt}&publicKey=${publicKey}`}
 			frameborder="0"
 		/>
 	</div>
