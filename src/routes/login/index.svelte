@@ -106,7 +106,10 @@
 			localStorage.setItem('last', JSON.stringify({ method, value, date: Date.now() }));
 			verifyDIDT(didt);
 		} catch (e) {
-			if (method === 'email' && e.code === RPCErrorCode.UserRequestEditEmail) {
+			if (
+				method === 'email' &&
+				(e.code === RPCErrorCode.UserRequestEditEmail || e.code === RPCErrorCode.InvalidParams)
+			) {
 				loading = false;
 			} else {
 				alert(`We couldn't log you in. Please try again. (Error message: ${e.message})`);
