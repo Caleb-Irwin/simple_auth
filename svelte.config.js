@@ -1,36 +1,42 @@
+// jshint esversion: 8
 import adapter from '@sveltejs/adapter-netlify';
 import preprocess from 'svelte-preprocess';
 import 'dotenv/config';
-import jwkToPem from 'jwk-to-pem';
+import pkg from 'node-jose';
+const { JWK } = pkg;
 
-/** @type {import('@sveltejs/kit').Config} */
-const config = {
-	// Consult https://github.com/sveltejs/svelte-preprocess
-	// for more information about preprocessors
-	preprocess: [
-		preprocess({
-			postcss: true
-		})
-	],
+const getConfig = async () => {
+	const __PRIVATE_KEY_PEM__ = JSON.stringify(
+		(await JWK.asKey(JSON.parse(process.env.KEY_PAIR), 'json')).toPEM(true)
+	);
 
-	kit: {
-		adapter: adapter({ split: true }),
-		vite: {
-			define: {
-				__PRIVATE_KEY_PEM__: JSON.stringify(
-					jwkToPem(JSON.parse(process.env['PRIVATE_KEY']), {
-						private: true
-					})
-				),
-				__PUBLIC_KEY_PEM__: JSON.stringify(
-					jwkToPem(JSON.parse(process.env['PRIVATE_KEY']), {
-						private: false
-					})
-				),
-				__MAGIC_PRIVATE__: JSON.stringify(process.env['MAGIC_PRIVATE'])
+	const __PUBLIC_KEY_PEM__ = JSON.stringify(
+		(await JWK.asKey(JSON.parse(process.env.KEY_PAIR), 'json')).toPEM()
+	);
+
+	const __PUBLIC_KEY_JWK__ = JSON.stringify(
+		JSON.stringify((await JWK.asKey(JSON.parse(process.env.KEY_PAIR), 'json')).toJSON())
+	);
+
+	/** @type {import('@sveltejs/kit').Config} */
+	return {
+		preprocess: [
+			preprocess({
+				postcss: true
+			})
+		],
+
+		kit: {
+			adapter: adapter({ split: true }),
+			vite: {
+				define: {
+					__PRIVATE_KEY_PEM__,
+					__PUBLIC_KEY_PEM__,
+					__PUBLIC_KEY_JWK__,
+					__MAGIC_PRIVATE__: JSON.stringify(process.env.MAGIC_PRIVATE)
+				}
 			}
 		}
-	}
+	};
 };
-
-export default config;
+export default await getConfig();

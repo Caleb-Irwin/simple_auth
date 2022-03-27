@@ -11,4 +11,5 @@ declare namespace App {
 
 declare const __PRIVATE_KEY_PEM__: string;
 declare const __PUBLIC_KEY_PEM__: string;
+declare const __PUBLIC_KEY_JWK__: string;
 declare const __MAGIC_PRIVATE__: string;

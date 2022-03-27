@@ -8,6 +8,7 @@
 	let dropDownOpen = false;
 	let pemMode = false;
 	const pemKey = __PUBLIC_KEY_PEM__;
+	const jwtKey = __PUBLIC_KEY_JWK__;
 	if (browser) new ClipboardJs('#clipboard');
 </script>
 
@@ -64,7 +65,7 @@
 			</button>
 		</div>
 		<code class="inline-block max-w-xl break-words" id="code-public-key">
-			{@html pemMode ? pemKey.replace(/\n/g, '<br/>') : import.meta.env['VITE_PUBLIC_KEY']}</code
+			{@html pemMode ? pemKey.replace(/\n/g, '<br/>') : jwtKey}</code
 		>
 	</div>
 {/if}

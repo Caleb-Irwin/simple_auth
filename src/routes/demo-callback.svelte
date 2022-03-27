@@ -16,9 +16,7 @@
 		<iframe
 			class="w-full h-full"
 			title="jwt viewer"
-			src={`https://jwt.io/#debugger-io?token=${jwt}&publicKey=${
-				import.meta.env['VITE_PUBLIC_KEY']
-			}`}
+			src={`https://jwt.io/#debugger-io?token=${jwt}&publicKey=${__PUBLIC_KEY_JWK__}`}
 			frameborder="0"
 		/>
 	</div>
