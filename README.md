@@ -1,20 +1,54 @@
-# create-svelte
+# Simple Authentication
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+An authentication service powered by [magic.link](https://magic.link) that returns a JSON Web Token.
 
-## Creating a project
+[Demo](https://simpleauth.calebirwin.ca/)
 
-If you're seeing this, you've probably already done this step. Congrats!
+## How to use
 
-```bash
-# create a new project in the current directory
-npm init svelte@next
+1. Go to https://your_simple_authentication_path.com/login?cb=https://example.com/callback
+2. User logs in
+3. Redirected back to https://example.com/callback?jwt=JSON_WEB_TOKEN
+4. Verify JWT and manage your user's session
 
-# create a new project in my-app
-npm init svelte@next my-app
+## JWT Information
+
+### Header
+
+`Algorithm: RS256`
+
+### Payload
+
+```ts
+{
+    sub: string; // A uuid v5 id generated from google id, email, or phone. This is not dependent on magic.link issuer.
+    exp: number; // Five minutes after creation (in seconds)
+    email?: string; // Email used to login or from google
+    phone_number?: string; // Phone used to login or from google
+    gid?: string; // Unique id from google fetched from https://www.googleapis.com/oauth2/v2/userinfo/ using access token
+    jti?: string; // JWT ID (unique)
+    iat?: number; // Issued at (in seconds)
+}
 ```
 
-> Note: the `@next` is temporary
+### Signature
+
+Get the public key from https://your_simple_authentication_path.com/ under encryption information or from environment variables. Both JWT and PEM formats are provided.
+
+## Config (Environment Variables)
+
+See [example.env](./example.env)
+
+```env
+VITE_MAGIC_PUBLIC = "pk_live_YOUR_PUBLIC_KEY"
+MAGIC_PRIVATE = "sk_live_YOUR_PRIVATE_KEY"
+KEY_PAIR = "a key pair in JWK format"
+VITE_NAMESPACE = "YOUR_NAMESPACE (if not provided will use public key)"
+```
+
+- `VITE_MAGIC_PUBLIC` and `MAGIC_PRIVATE` you can get for free from [magic.link](https://magic.link/) by creating an account. Because we generate our own id you can change your magic keys whenever (as long as they are from the same account).
+- `KEY_PAIR` must be in JWK format. [Example generator](https://mkjwk.org/) (set to sign and RS256).
+- `VITE_NAMESPACE` can be any string. A UUID v4 works well.
 
 ## Developing
 
@@ -37,4 +71,6 @@ npm run build
 
 You can preview the production build with `npm run preview`.
 
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+## Deploying
+
+Out of the box, you can deploy this app to Netlify, just make sure to add the environment variables. If you change the adapter you should be able to deploy to any node-based platform (such as Vercel, but not Cloudflare Pages).
