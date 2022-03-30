@@ -25,8 +25,8 @@ const getConfig = async () => {
 				postcss: true
 			})
 		],
-
 		kit: {
+			prerender: { default: true },
 			adapter: adapter({ split: true }),
 			vite: {
 				define: {

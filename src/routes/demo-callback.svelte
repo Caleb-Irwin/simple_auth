@@ -1,9 +1,10 @@
 <script context="module" lang="ts">
+	export const prerender = false;
 	import type { Load } from '@sveltejs/kit';
 	export const load: Load = function ({ url }) {
 		return { props: { jwt: url.searchParams.get('jwt') } };
 	};
-	const publicKey = __PUBLIC_KEY_JWK__
+	const publicKey = __PUBLIC_KEY_JWK__;
 </script>
 
 <script lang="ts">
