@@ -34,6 +34,8 @@
 		if (!verifyCallbackUrl(location.search)) {
 			goto('/login/invalid' + location.search, { replaceState: true });
 		}
+		// Warmup!
+		fetch('/api/sign');
 		const lastStr = localStorage.getItem('last');
 		if (lastStr !== null) {
 			lastSignIn = JSON.parse(lastStr);

@@ -10,6 +10,13 @@ import getUuidByString from 'uuid-by-string';
 const namespace = (import.meta.env['VITE_NAMESPACE'] as string) ?? __PUBLIC_KEY_PEM__;
 const m = new Magic(__MAGIC_PRIVATE__);
 
+export const get: RequestHandler = async (_) => {
+	return {
+		status: 200,
+		body: 'Warmed up!'
+	};
+};
+
 export const post: RequestHandler<'', { message: string } | { redirect: string }> = async ({
 	request
 }) => {
