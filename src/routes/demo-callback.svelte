@@ -11,15 +11,13 @@
 	export let jwt: string;
 </script>
 
-<div class="top-0 left-0 absolute w-full h-full grid place-items-center">
-	<div class="w-4/5 h-4/5 p-2 bg-white rounded-lg pb-20">
-		<h1 class="text-3xl mt-1 text-center font-bold">View JSON Web Token</h1>
-		<p class="text-lg mb-1 text-center underline"><a href="/">Home</a></p>
-		<iframe
-			class="w-full h-full"
-			title="jwt viewer"
-			src={`https://jwt.io/#debugger-io?token=${jwt}&publicKey=${publicKey}`}
-			frameborder="0"
-		/>
-	</div>
+<div class="max-w-4xl max-h-min m-5 pb-16" style="width:80vw; height: 80vh">
+	<h1 class="text-3xl mt-1 text-center font-bold">View JSON Web Token</h1>
+	<p class="text-lg mb-1 text-center underline"><a href="/">Home</a></p>
+	<iframe
+		class="w-full h-full max-h-"
+		title="jwt viewer"
+		src={`https://jwt.io/#debugger-io?token=${jwt}&publicKey=${publicKey}`}
+		frameborder="0"
+	/>
 </div>
