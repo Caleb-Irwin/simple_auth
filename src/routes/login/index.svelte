@@ -23,7 +23,7 @@
 		areacode = '+1',
 		phone = '',
 		phoneMode = false,
-		loading = false,
+		loading = true,
 		loadingGoogle = false,
 		lastSignIn: { method: Method; value?: string; date: number } = null,
 		prefetchedDidt: { didt: string; expires: number } = null,
@@ -55,6 +55,7 @@
 					if (loginOnInit) useReauth();
 					return;
 				}
+				loading = false;
 				if (!awaitingInitailization) return;
 				prefetchedDidt = {
 					didt: await magic.user.getIdToken(),
@@ -68,7 +69,7 @@
 				awaitingInitailization = false;
 				state = 'login';
 			}
-		}
+		} else loading = false;
 		magic.preload();
 	});
 	const submit = () => {
