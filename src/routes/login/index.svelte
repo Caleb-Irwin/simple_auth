@@ -52,6 +52,7 @@
 				if (!loggedIn) {
 					state = 'reauth';
 					awaitingInitailization = false;
+					loading = false;
 					if (loginOnInit) useReauth();
 					return;
 				}
