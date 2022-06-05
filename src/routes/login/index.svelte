@@ -42,13 +42,17 @@
 			if (lastSignIn.date + 1000 * 60 * 60 * 24 * 7 < Date.now()) {
 				console.log('expired');
 				state = 'reauth';
+				loading = false;
 				return;
 			}
 			awaitingInitailization = true;
 			state = 'prev';
 			try {
 				const loggedIn = await magic.user.isLoggedIn();
-				if (!awaitingInitailization) return;
+				if (!awaitingInitailization) {
+					loading = false;
+					return;
+				}
 				if (!loggedIn) {
 					state = 'reauth';
 					awaitingInitailization = false;
